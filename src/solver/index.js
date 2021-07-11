@@ -17,14 +17,18 @@ const SQUARE_NUMBER_BY_COORDINATES = [
 // digit means filled in cell
 export function solve(sudoku) {
     let internalSudoku = initialSudokuToInternalRepresentation(sudoku);
-    console.log(internalSudokuToString(internalSudoku));
+    // console.log(internalSudokuToString(internalSudoku));
     internalSudoku = calculatePotentialSolutions(internalSudoku);
-    console.log(internalSudokuToString(internalSudoku));
+    // console.log(internalSudokuToString(internalSudoku));
     let previousNumberOfUnsolvedCells = getNumberOfUnsolvedCells(internalSudoku);
     while (true) {
         internalSudoku = calculatePotentialSolutions(internalSudoku);
-        console.log(internalSudokuToString(internalSudoku));
-        const currentNumberOfUnsolvedCells = getNumberOfUnsolvedCells(internalSudoku);
+        // console.log(internalSudokuToString(internalSudoku));
+        let currentNumberOfUnsolvedCells = getNumberOfUnsolvedCells(internalSudoku);
+        if (currentNumberOfUnsolvedCells === previousNumberOfUnsolvedCells) {
+            internalSudoku = applyJediTechniques(internalSudoku);
+        }
+        currentNumberOfUnsolvedCells = getNumberOfUnsolvedCells(internalSudoku);
         if (currentNumberOfUnsolvedCells === previousNumberOfUnsolvedCells) {
             throw new Error('Can\'t solve sudoku :(');
         }
@@ -33,7 +37,7 @@ export function solve(sudoku) {
         }
         previousNumberOfUnsolvedCells = currentNumberOfUnsolvedCells;
     }
-    return internalSudokuToExternalRepresentation(internalSudoku); 
+    return internalSudokuToExternalRepresentation(internalSudoku);
 }
 
 export function initialSudokuToInternalRepresentation(sudoku) {
@@ -71,9 +75,9 @@ export function calculatePotentialSolutionsForCell(internalSudoku, i, j) {
     const columnDigits = getColumnDigits(internalSudoku, j);
     const squareDigits = getSquareDigits(internalSudoku, getSquareNumberByCellCoordinates(i, j));
     return [1, 2, 3, 4, 5, 6, 7, 8, 9]
-    .filter(v => !rowDigits.includes(v))
-    .filter(v => !columnDigits.includes(v))
-    .filter(v => !squareDigits.includes(v));
+        .filter(v => !rowDigits.includes(v))
+        .filter(v => !columnDigits.includes(v))
+        .filter(v => !squareDigits.includes(v));
 }
 
 export function getRowDigits(internalSudoku, r) {
@@ -117,4 +121,86 @@ export function getNumberOfUnsolvedCells(internalSudoku) {
 
 export function internalSudokuToString(internalSudoku) {
     return internalSudoku.map(row => row.map(cell => '[' + cell.join('') + ']').join(', ')).join('\n');
+}
+
+// returns array of arrays and internal array is data about potential insert
+// [digit_to_insert, row, column]
+export function findSingleAlternativesInSquare(square) {
+    const all = findAllAlternativesInSquare(square);
+    const counters = [1, 2, 3, 4, 5, 6, 7, 8, 9].reduce((acc, curr) => {
+        return {
+            ...acc,
+            [curr]: 0
+        }
+    }, {});
+    for (let alt of all) {
+        counters[alt[0]]++;
+    }
+    const singleAlternatives = Object.entries(counters).reduce((acc, [alt, counter]) => {
+        if (counter === 1) {
+            return [...acc, +alt];
+        }
+        return acc;
+    }, []);
+    return singleAlternatives.map(singleAlt => all.find(altInfo => {
+        return altInfo[0] === singleAlt;
+    }));
+}
+
+export function findAllAlternativesInSquare(square) {
+    const result = [];
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+            const cell = square[i][j];
+            if (cell.length > 1) {
+                for (let alt of cell) {
+                    result.push([alt, i, j]);
+                }
+            }
+        }
+    }
+    return result;
+}
+
+export function getSquare(internalSudoku, squareNumber) {
+    const squareCellsInArray = [];
+    for (let i = 0; i < SUDOKU_MAGIC_NUMBER; i++) {
+        for (let j = 0; j < SUDOKU_MAGIC_NUMBER; j++) {
+            if (SQUARE_NUMBER_BY_COORDINATES[i][j] === squareNumber) {
+                squareCellsInArray.push(internalSudoku[i][j]);
+            }
+        }
+    }
+    const result = [[], [], []];
+    for (let i = 0; i < 3; i++) {
+        for (let j = 0; j < 3; j++) {
+            result[i][j] = squareCellsInArray[i * 3 + j];
+        }
+    }
+    return result;
+}
+
+export function squareCoordinatesToSudokuCoordinates(squareNumber, i, j) {
+    for (let x = 0; x < SUDOKU_MAGIC_NUMBER; x++) {
+        for (let y = 0; y < SUDOKU_MAGIC_NUMBER; y++) {
+            if (SQUARE_NUMBER_BY_COORDINATES[x][y] === squareNumber) {
+                return [x + i, y + j];
+            }
+        }
+    }
+}
+
+export function applyJediTechniques(internalSudoku) {
+    console.log('Jedi\'s technique!!!');
+    for (let squareNumber = 1; squareNumber < SUDOKU_MAGIC_NUMBER + 1; squareNumber++) {
+        const square = getSquare(internalSudoku, squareNumber);
+        const singleAlternatives = findSingleAlternativesInSquare(square);
+        if (singleAlternatives.length > 0) {
+            const singleAlternative = singleAlternatives[0];
+            const [x, y] = squareCoordinatesToSudokuCoordinates(squareNumber, singleAlternative[1], singleAlternative[2]);
+            internalSudoku[x][y] = [singleAlternative[0]];
+            return internalSudoku;
+        }
+    }
+    return internalSudoku;
 }

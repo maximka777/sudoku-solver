@@ -1,4 +1,4 @@
-import { solve, getSquareNumberByCellCoordinates, getSquareDigits, initialSudokuToInternalRepresentation, calculatePotentialSolutionsForCell, getRowDigits, getColumnDigits, getNumberOfUnsolvedCells, internalSudokuToString } from '../../src/solver';
+import { solve, getSquareNumberByCellCoordinates, getSquareDigits, initialSudokuToInternalRepresentation, calculatePotentialSolutionsForCell, getRowDigits, getColumnDigits, getNumberOfUnsolvedCells, internalSudokuToString, findAllAlternativesInSquare, findSingleAlternativesInSquare, squareCoordinatesToSudokuCoordinates, getSquare } from '../../src/solver';
 
 const TEST_INITIAL_SUDOKU = [
     [3, null, 7, null, 8, 1, null, null, null],
@@ -74,9 +74,53 @@ describe('solver', () => {
 
     it('converts mini-sudoku to correct string', () => {
         expect(internalSudokuToString([
-            [[1,2,3], [5], [7]],
-            [[], [6,7], [8,9]],
+            [[1, 2, 3], [5], [7]],
+            [[], [6, 7], [8, 9]],
             [[], [], []]
         ])).toBe('[123], [5], [7]\n[], [67], [89]\n[], [], []')
+    });
+
+    it('finds correct alternatives in square', () => {
+        const square = [
+            [[1], [2], [3]],
+            [[4, 5], [5, 6], [6, 7]],
+            [[7, 9], [8], [5, 6]]
+        ];
+        expect(findAllAlternativesInSquare(square).toString()).toBe([
+            [4, 1, 0],
+            [5, 1, 0],
+            [5, 1, 1],
+            [6, 1, 1],
+            [6, 1, 2],
+            [7, 1, 2],
+            [7, 2, 0],
+            [9, 2, 0],
+            [5, 2, 2],
+            [6, 2, 2],
+        ].toString());
+    });
+
+    it('finds correct single alternatives in square', () => {
+        const square = [
+            [[1], [2], [3]],
+            [[4, 5], [5, 6], [6, 7]],
+            [[7, 9], [8], [5, 6]]
+        ];
+        expect(findSingleAlternativesInSquare(square).toString()).toBe([
+            [4, 1, 0],
+            [9, 2, 0],
+        ].toString());
+    });
+
+    it('converts correctly square coodriantes to sudoku coordinates', () => {
+        expect(squareCoordinatesToSudokuCoordinates(5, 1, 1).toString()).toBe([4, 4].toString());
+    });
+
+    it('returns correct square', () => {
+        expect(getSquare(initialSudokuToInternalRepresentation(TEST_INITIAL_SUDOKU), 4).toString()).toBe([
+            [[], [8], [5]],
+            [[4], [], []],
+            [[6], [9], []]
+        ].toString());
     });
 });
