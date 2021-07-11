@@ -17,14 +17,14 @@ const SQUARE_NUMBER_BY_COORDINATES = [
 // digit means filled in cell
 export function solve(sudoku) {
     let internalSudoku = initialSudokuToInternalRepresentation(sudoku);
-    // console.log(internalSudokuToString(internalSudoku));
     internalSudoku = calculatePotentialSolutions(internalSudoku);
-    // console.log(internalSudokuToString(internalSudoku));
     let previousNumberOfUnsolvedCells = getNumberOfUnsolvedCells(internalSudoku);
     while (true) {
         internalSudoku = calculatePotentialSolutions(internalSudoku);
-        // console.log(internalSudokuToString(internalSudoku));
         let currentNumberOfUnsolvedCells = getNumberOfUnsolvedCells(internalSudoku);
+        if (currentNumberOfUnsolvedCells === 0) {
+            break;
+        }
         if (currentNumberOfUnsolvedCells === previousNumberOfUnsolvedCells) {
             internalSudoku = applyJediTechniques(internalSudoku);
         }
