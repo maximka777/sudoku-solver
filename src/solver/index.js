@@ -12,21 +12,24 @@ const SQUARE_NUMBER_BY_COORDINATES = [
     [7, 7, 7, 8, 8, 8, 9, 9, 9]
 ];
 
+export const EVENT_DIGIT_IS_INSERTED = Symbol();
+
 // sudoku is a matrix 9*9 (array of nine arrays of nine digits)
 // null means empty cell
 // digit means filled in cell
-export function solve(sudoku) {
+export function solve(sudoku, callback) {
+    callback = callback === undefined ? console.log : (callback || (() => {}));
     let internalSudoku = initialSudokuToInternalRepresentation(sudoku);
-    internalSudoku = calculatePotentialSolutions(internalSudoku);
+    internalSudoku = calculatePotentialSolutions(internalSudoku, callback);
     let previousNumberOfUnsolvedCells = getNumberOfUnsolvedCells(internalSudoku);
     while (true) {
-        internalSudoku = calculatePotentialSolutions(internalSudoku);
+        internalSudoku = calculatePotentialSolutions(internalSudoku, callback);
         let currentNumberOfUnsolvedCells = getNumberOfUnsolvedCells(internalSudoku);
         if (currentNumberOfUnsolvedCells === 0) {
             break;
         }
         if (currentNumberOfUnsolvedCells === previousNumberOfUnsolvedCells) {
-            internalSudoku = applyJediTechniques(internalSudoku);
+            internalSudoku = applyJediTechniques(internalSudoku, callback);
         }
         currentNumberOfUnsolvedCells = getNumberOfUnsolvedCells(internalSudoku);
         if (currentNumberOfUnsolvedCells === previousNumberOfUnsolvedCells) {
@@ -57,11 +60,15 @@ export function internalSudokuToExternalRepresentation(sudoku) {
     }, []);
 }
 
-export function calculatePotentialSolutions(internalSudoku) {
+export function calculatePotentialSolutions(internalSudoku, cb) {
     return internalSudoku.reduce((result, line, i) => {
         return [...result, line.map((v, j) => {
             if (v.length !== 1) {
-                return calculatePotentialSolutionsForCell(internalSudoku, i, j);
+                const cell = calculatePotentialSolutionsForCell(internalSudoku, i, j);
+                if (cell.length === 1) {
+                    cb(eventDigitIsInserted(cell[0], i, j));
+                }
+                return cell;
             }
             return v;
         })];
@@ -190,7 +197,7 @@ export function squareCoordinatesToSudokuCoordinates(squareNumber, i, j) {
     }
 }
 
-export function applyJediTechniques(internalSudoku) {
+export function applyJediTechniques(internalSudoku, cb) {
     console.log('Jedi\'s technique!!!');
     for (let squareNumber = 1; squareNumber < SUDOKU_MAGIC_NUMBER + 1; squareNumber++) {
         const square = getSquare(internalSudoku, squareNumber);
@@ -199,8 +206,20 @@ export function applyJediTechniques(internalSudoku) {
             const singleAlternative = singleAlternatives[0];
             const [x, y] = squareCoordinatesToSudokuCoordinates(squareNumber, singleAlternative[1], singleAlternative[2]);
             internalSudoku[x][y] = [singleAlternative[0]];
+            cb(eventDigitIsInserted(singleAlternative[0], x, y, true));
             return internalSudoku;
         }
     }
     return internalSudoku;
+}
+
+function eventDigitIsInserted(digit, x, y, isJedi) {
+    isJedi = isJedi || false;
+    return {
+        event: EVENT_DIGIT_IS_INSERTED,
+        digit,
+        x,
+        y,
+        isJedi
+    };
 }

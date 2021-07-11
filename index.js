@@ -1,10 +1,13 @@
-import { solve } from './src/solver/index.js';
-import { readSudokuFromTable, writeSudokuToTable } from './src/ui/index.js';
+import { EVENT_DIGIT_IS_INSERTED, solve } from './src/solver/index.js';
+import { readSudokuFromTable, writeSudokuToTableAccordingToInsertsList } from './src/ui/index.js';
 
 function du(table) {
     const sudoku = readSudokuFromTable(table);
-    const solvedSudoku = solve(sudoku);
-    writeSudokuToTable(solvedSudoku, table);
+
+    const events = [];
+    solve(sudoku, event => events.push(event));
+
+    writeSudokuToTableAccordingToInsertsList(events.filter(e => e.event === EVENT_DIGIT_IS_INSERTED), table, 100);
 }
 
 const table = document.querySelector('#sudoku-table');

@@ -123,4 +123,6 @@ describe('solver', () => {
             [[6], [9], []]
         ].toString());
     });
+
+    // TODO(max): Test callback with events
 });

@@ -21,3 +21,23 @@ export function writeSudokuToTable(sudoku, table) {
         }
     }
 }
+
+export async function writeSudokuToTableAccordingToInsertsList(inserts, table, delay) {
+    delay = delay || 500;
+    const body = table.querySelector('tbody');
+    for (let insert of inserts) {
+        const cell = body.children[insert.x].children[insert.y];
+        cell.style.backgroundColor = insert.isJedi ? JEDI_INSERT_COLOR : DEFAULT_INSERT_COLOR;
+        cell.children[0].textContent = `${insert.digit}`;
+        await sleep(delay);
+    }
+}
+
+function sleep(time) {
+    return new Promise(resolve => setTimeout(resolve, time));
+} 
+
+
+const JEDI_INSERT_COLOR = 'orange';
+
+const DEFAULT_INSERT_COLOR = 'green';
